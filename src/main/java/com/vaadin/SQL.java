@@ -6,21 +6,26 @@ public class SQL {
 
 
     private static Connection con;
-    private static final String conString = "jdbc:mysql://localhost/adressen?useLegacyDatetimeCode=false&serverTimezone=UTC";
+    private static final String conString = "jdbc:mysql://localhost:3306/adressen?useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false";
 
     public static void open() {
         try {
+            //Class.forName("com.mysql.jdbc.Driver");
             con = DriverManager.getConnection(conString, "admin", "admin");
+            System.out.println("connected to db");
         } catch (SQLException e) {
             System.err.println(e);
+            System.out.println("con failed");
         }
     }
 
     public static void close() {
         try {
             con.close();
+            System.out.println("connection closed");
         } catch (SQLException e) {
             System.err.println(e);
+            System.out.println("close failed");
         }
     }
 
@@ -43,10 +48,11 @@ public class SQL {
 
     public static int addPerson(int addressid, String firstname, String lastname, String birthday){
         String query = "INSERT INTO person (idaddress, firstname, lastname, birthday) VALUES (" + addressid + ", '" + firstname + "', '" + lastname + "', '" + birthday + "');";
+        ResultSet keys = null;
         try{
             PreparedStatement statement = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
             statement.executeUpdate();
-            ResultSet keys = statement.getGeneratedKeys();
+            keys = statement.getGeneratedKeys();
             if(keys.next()){
                 return keys.getInt(1);
             }
@@ -54,6 +60,7 @@ public class SQL {
             System.err.println(e);
         }
         return 0;
+
     }
 
     public static void updatePerson(int id, int addressid, String firstname, String lastname, String birthday){
@@ -75,22 +82,24 @@ public class SQL {
     }
 
     public static ResultSet selectPerson(){
-        String query = "SELECT * FROM person";
+        String query = "SELECT * FROM person;";
+        ResultSet rs = null;
         try{
-            return con.createStatement().executeQuery(query);
+            rs = con.createStatement().executeQuery(query);
         }catch(SQLException e){
             System.err.println(e);
         }
-        return null;
+        return rs;
     }
 
 
     public static int addAddress(String street, String number, int plz, String city, String country){
-        String query = "INSERT INTO address (street, number, plz, city, country) VALUES ('"+street+"', '"+number+"', "+plz+", '"+city+"', '"+country+"')";
+        String query = "INSERT INTO address (street, number, plz, city, country) VALUES ('"+street+"', '"+number+"', "+plz+", '"+city+"', '"+country+"');";
+        ResultSet keys;
         try{
             PreparedStatement statement = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
             statement.executeUpdate();
-            ResultSet keys = statement.getGeneratedKeys();
+            keys = statement.getGeneratedKeys();
             if(keys.next()){
                 return keys.getInt(1);
             }
@@ -119,14 +128,26 @@ public class SQL {
     }
 
     public static ResultSet selectAddress(){
-        String query = "SELECT * FROM address";
+        String query = "SELECT * FROM address;";
+        ResultSet rs = null;
         try{
-            return con.createStatement().executeQuery(query);
+            rs = con.createStatement().executeQuery(query);
         }catch(SQLException e){
             System.err.println(e);
         }
-        return null;
+        return rs;
     }
 
+
+    public static ResultSet selectBoth(){
+        String query = "SELECT idperson, person.idaddress, firstname, lastname, birthday, street, number, plz, city, country FROM person INNER JOIN address ON person.idaddress = address.idaddress;";
+        ResultSet rs = null;
+        try{
+            rs = con.createStatement().executeQuery(query);
+        }catch(SQLException e){
+            System.err.println(e);
+        }
+        return rs;
+    }
 
 }
