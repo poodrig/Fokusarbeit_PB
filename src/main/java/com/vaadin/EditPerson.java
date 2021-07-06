@@ -6,6 +6,8 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
+import com.vaadin.flow.component.radiobutton.RadioGroupVariant;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 
@@ -22,6 +24,9 @@ public class EditPerson {
     NumberField plz = new NumberField();
     TextField city = new TextField();
     TextField country = new TextField();
+
+    Address selectedAddress;
+    RadioButtonGroup<String> radioGroup = new RadioButtonGroup<>();
 
     Dialog editPerson(MainView mv){
         Dialog dialog = new Dialog();
@@ -56,8 +61,20 @@ public class EditPerson {
 
             if(filledOut) {
                 SQL.open();
-                int idaddress = SQL.addAddress(street.getValue(), number.getValue(), (int) Math.round(plz.getValue()), city.getValue(), country.getValue());
+                int idaddress;
+                if(selectedAddress != null){
+                    idaddress = selectedAddress.getIdaddress();
+                }
+                else {
+                    if (radioGroup.getValue().equals("Add as new address")) {
+                        idaddress = SQL.addAddress(street.getValue(), number.getValue(), (int) Math.round(plz.getValue()), city.getValue(), country.getValue());
+                    } else {
+                        idaddress = mv.selectedPerson.getIdaddress();
+                        SQL.updateAddress(idaddress, street.getValue(), number.getValue(), (int) Math.round(plz.getValue()), city.getValue(), country.getValue());
+                    }
+                }
                 SQL.updatePerson(mv.selectedPerson.getIdperson(), idaddress, firstname.getValue(), lastname.getValue(), birthday.getValue().toString());
+
                 mv.update();
                 SQL.close();
                 dialog.close();
@@ -106,6 +123,13 @@ public class EditPerson {
         form.add(city);
         form.add(lblcountry);
         form.add(country);
+
+        radioGroup.setLabel("Address");
+        radioGroup.setItems("Add as new address", "Update existing address");
+        radioGroup.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL);
+        radioGroup.setValue("Add as new address");
+
+        form.add(radioGroup);
 
         form.add(address);
         form.add(submit);
@@ -162,13 +186,18 @@ public class EditPerson {
         txtcountry.setReadOnly(true);
 
         addressGrid.addSelectionListener(event -> {
-            if(addressGrid.getSelectedItems().size() == 0) return;
-            Address selected = (Address) addressGrid.getSelectedItems().toArray()[0];
-            txtstreet.setValue(selected.getStreet());
-            txtnumber.setValue(selected.getNumber());
-            txtplz.setValue((double) selected.getPlz());
-            txtcity.setValue(selected.getCity());
-            txtcountry.setValue(selected.getCountry());
+            if(addressGrid.getSelectedItems().size() == 0){
+                selectedAddress = null;
+                radioGroup.setVisible(true);
+                return;
+            };
+            selectedAddress = (Address) addressGrid.getSelectedItems().toArray()[0];
+            txtstreet.setValue(selectedAddress.getStreet());
+            txtnumber.setValue(selectedAddress.getNumber());
+            txtplz.setValue((double) selectedAddress.getPlz());
+            txtcity.setValue(selectedAddress.getCity());
+            txtcountry.setValue(selectedAddress.getCountry());
+            radioGroup.setVisible(false);
         });
 
         form.add(lblstreet);
@@ -199,6 +228,7 @@ public class EditPerson {
         });
 
         Button cancel = new Button("Cancel", event -> {
+            radioGroup.setVisible(true);
             dialog.close();
         });
 

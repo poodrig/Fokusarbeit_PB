@@ -19,15 +19,6 @@ public class MainView extends VerticalLayout {
     Grid<Person> grid = new Grid<>(Person.class);
     Person selectedPerson;
 
-    TextField firstname = new TextField();
-    TextField lastname = new TextField();
-    DatePicker birthday = new DatePicker();
-    TextField street = new TextField();
-    TextField number = new TextField();
-    NumberField plz = new NumberField();
-    TextField city = new TextField();
-    TextField country = new TextField();
-
     public MainView() {
         SQL.open();
         grid.setItems(Person.getBothList(SQL.selectBoth()));
@@ -86,7 +77,7 @@ public class MainView extends VerticalLayout {
             addPerson.open();
         });
 
-        Button addressbtn = new Button("Addresses", event -> {
+        Button addressbtn = new Button("addresses", event -> {
            addressActions.open();
         });
 
@@ -96,88 +87,6 @@ public class MainView extends VerticalLayout {
         add(addressbtn);
 
         SQL.close();
-    }
-
-    Dialog addressDialog(){
-        Dialog dialog = new Dialog();
-        FormLayout form = new FormLayout();
-        Grid<Address> addressGrid = new Grid<>(Address.class);
-
-        SQL.open();
-        addressGrid.setItems(Address.getAddressList(SQL.selectAddress()));
-        ArrayList<Grid.Column<Address>> list = new ArrayList<>();
-        list.add(addressGrid.getColumnByKey("street"));
-        list.add(addressGrid.getColumnByKey("number"));
-        list.add(addressGrid.getColumnByKey("plz"));
-        list.add(addressGrid.getColumnByKey("city"));
-        list.add(addressGrid.getColumnByKey("country"));
-        list.add(addressGrid.getColumnByKey("idaddress"));
-        addressGrid.setColumnOrder(list);
-        dialog.add(addressGrid);
-        SQL.close();
-
-        Label lblstreet = new Label("Street");
-        Label lblnumber = new Label("Number");
-        Label lblplz = new Label("PLZ");
-        Label lblcity = new Label("City");
-        Label lblcountry = new Label("Country");
-
-        TextField txtstreet = new TextField();
-        txtstreet.setReadOnly(true);
-        TextField txtnumber = new TextField();
-        txtnumber.setReadOnly(true);
-        NumberField txtplz = new NumberField();
-        txtplz.setReadOnly(true);
-        TextField txtcity = new TextField();
-        txtcity.setReadOnly(true);
-        TextField txtcountry = new TextField();
-        txtcountry.setReadOnly(true);
-
-        addressGrid.addSelectionListener(event -> {
-            if(addressGrid.getSelectedItems().size() == 0) return;
-            Address selected = (Address) addressGrid.getSelectedItems().toArray()[0];
-            txtstreet.setValue(selected.getStreet());
-            txtnumber.setValue(selected.getNumber());
-            txtplz.setValue((double) selected.getPlz());
-            txtcity.setValue(selected.getCity());
-            txtcountry.setValue(selected.getCountry());
-        });
-
-        form.add(lblstreet);
-        form.add(txtstreet);
-        form.add(lblnumber);
-        form.add(txtnumber);
-        form.add(lblplz);
-        form.add(txtplz);
-        form.add(lblcity);
-        form.add(txtcity);
-        form.add(lblcountry);
-        form.add(txtcountry);
-
-        Button submit = new Button("Submit", event -> {
-            street.setReadOnly(true);
-            number.setReadOnly(true);
-            plz.setReadOnly(true);
-            city.setReadOnly(true);
-            country.setReadOnly(true);
-
-            street.setValue(txtstreet.getValue());
-            number.setValue(txtnumber.getValue());
-            plz.setValue(txtplz.getValue());
-            city.setValue(txtcity.getValue());
-            country.setValue(txtcountry.getValue());
-
-            dialog.close();
-        });
-
-        Button cancel = new Button("Cancel", event -> {
-            dialog.close();
-        });
-
-        form.add(submit);
-        form.add(cancel);
-        dialog.add(form);
-        return dialog;
     }
 
     void update(){
