@@ -127,7 +127,7 @@ public class EditPerson {
         radioGroup.setLabel("Address");
         radioGroup.setItems("Add as new address", "Update existing address");
         radioGroup.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL);
-        radioGroup.setValue("Add as new address");
+        radioGroup.setValue("Update existing address");
 
         form.add(radioGroup);
 
