@@ -19,7 +19,6 @@ class SQLTest {
 
     @Test
     void address() {
-
         SQL.open();
         int id = SQL.addAddress("Notkerstrasse", "20", 9000, "St. Gallen", "Schweiz");
         SQL.updateAddress(id, "Auerfussweg", "3", 9442, "Berneck", "Schweiz");

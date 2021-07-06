@@ -6,11 +6,11 @@ public class SQL {
 
 
     private static Connection con;
-    private static final String conString = "jdbc:mysql://localhost:3306/adressen?useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false";
+    private static final String conString = "jdbc:mysql://localhost:3306/adressen?useLegacyDatetimeCode=false&serverTimezone=UTC&AllowPublicKeyRetrieval=True";
 
     public static void open() {
         try {
-            //Class.forName("com.mysql.jdbc.Driver");
+            //Class.forName("com.mysql.cj.jdbc.Driver");
             con = DriverManager.getConnection(conString, "admin", "admin");
             System.out.println("connected to db");
         } catch (SQLException e) {
@@ -59,8 +59,7 @@ public class SQL {
         }catch(SQLException e){
             System.err.println(e);
         }
-        return 0;
-
+        return -1;
     }
 
     public static void updatePerson(int id, int addressid, String firstname, String lastname, String birthday){
@@ -106,7 +105,7 @@ public class SQL {
         }catch(SQLException e){
             System.err.println(e);
         }
-        return 0;
+        return -1;
     }
 
     public static void updateAddress(int id, String street, String number, int plz, String city, String country){
@@ -148,6 +147,19 @@ public class SQL {
             System.err.println(e);
         }
         return rs;
+    }
+
+    public static boolean AddressInUse(int id){
+        String query = "SELECT * from person WHERE idaddress = " + id + ";";
+        ResultSet rs = null;
+        boolean inuse = true;
+        try{
+            rs = con.createStatement().executeQuery(query);
+            inuse = rs.next();
+        } catch (SQLException e) {
+            System.err.println(e);
+        }
+        return inuse;
     }
 
 }

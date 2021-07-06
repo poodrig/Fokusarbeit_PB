@@ -6,18 +6,13 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Label;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.router.Route;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 
-@Route
-public class MainView extends VerticalLayout {
-
-    Grid<Person> grid = new Grid<>(Person.class);
-    Person selectedPerson;
+public class EditPerson {
 
     TextField firstname = new TextField();
     TextField lastname = new TextField();
@@ -28,80 +23,113 @@ public class MainView extends VerticalLayout {
     TextField city = new TextField();
     TextField country = new TextField();
 
-    public MainView() {
-        SQL.open();
-        grid.setItems(Person.getBothList(SQL.selectBoth()));
+    Dialog editPerson(MainView mv){
+        Dialog dialog = new Dialog();
+        FormLayout form = new FormLayout();
 
-        ArrayList<Grid.Column<Person>> list = new ArrayList<>();
-        list.add(grid.getColumnByKey("firstname"));
-        list.add(grid.getColumnByKey("lastname"));
-        list.add(grid.getColumnByKey("birthday"));
-        list.add(grid.getColumnByKey("street"));
-        list.add(grid.getColumnByKey("number"));
-        list.add(grid.getColumnByKey("plz"));
-        list.add(grid.getColumnByKey("city"));
-        list.add(grid.getColumnByKey("country"));
-        list.add(grid.getColumnByKey("idaddress"));
-        list.add(grid.getColumnByKey("idperson"));
+        Dialog addressDialog = addressDialog();
+        mv.add(addressDialog);
 
-        grid.setColumnOrder(list);
-        add(grid);
+        Label lblfirstname = new Label("Firstname*");
+        Label lbllastname = new Label("Lastname*");
+        Label lblbirthday = new Label("Birthday*");
+        Label lblstreet = new Label("Street");
+        Label lblnumber = new Label("Number");
+        Label lblplz = new Label("PLZ");
+        Label lblcity = new Label("City");
+        Label lblcountry = new Label("Country");
 
-        grid.addSelectionListener(event -> {
-            if(grid.getSelectedItems().size() == 0){
-                selectedPerson = null;
-                return;
-            };
-            selectedPerson = (Person) grid.getSelectedItems().toArray()[0];
+        Button submit = new Button("Submit", event -> {
+            boolean filledOut = true;
+            if(firstname.getValue().equals("")){
+                //make red
+                filledOut = false;
+            }
+            if(lastname.getValue().equals("")){
+                //make red
+                filledOut = false;
+            }
+            if(birthday.getValue().toString().equals("")){
+                //make red
+                filledOut = false;
+            }
+
+            if(filledOut) {
+                SQL.open();
+                int idaddress = SQL.addAddress(street.getValue(), number.getValue(), (int) Math.round(plz.getValue()), city.getValue(), country.getValue());
+                SQL.updatePerson(mv.selectedPerson.getIdperson(), idaddress, firstname.getValue(), lastname.getValue(), birthday.getValue().toString());
+                mv.update();
+                SQL.close();
+                dialog.close();
+            }
+
+            firstname.setReadOnly(false);
+            lastname.setReadOnly(false);
+            birthday.setReadOnly(false);
+            street.setReadOnly(false);
+            number.setReadOnly(false);
+            plz.setReadOnly(false);
+            city.setReadOnly(false);
+            country.setReadOnly(false);
         });
 
-        DeletePerson dp = new DeletePerson();
-        Dialog deletePerson = dp.deletePerson(this);
-        add(deletePerson);
+        Button cancel = new Button("Cancel", event -> {
+            firstname.setReadOnly(false);
+            lastname.setReadOnly(false);
+            birthday.setReadOnly(false);
+            street.setReadOnly(false);
+            number.setReadOnly(false);
+            plz.setReadOnly(false);
+            city.setReadOnly(false);
+            country.setReadOnly(false);
 
-        EditPerson ep = new EditPerson();
-        Dialog editPerson = ep.editPerson(this);
-        add(editPerson);
-
-        AddPerson ap = new AddPerson();
-        Dialog addPerson = ap.addPerson(this);
-        add(addPerson);
-
-        AddressActions aa = new AddressActions();
-        Dialog addressActions = aa.addressDialog(this);
-        add(addressActions);
-
-        Button deletebtn = new Button("delete", event -> {
-            if(selectedPerson == null) return;
-            deletePerson.open();
+            dialog.close();
         });
 
-        Button editbtn = new Button("edit", event -> {
-            if(selectedPerson == null) return;
-            ep.fill(selectedPerson);
-            editPerson.open();
+        Button address = new Button("Choose existing address", event -> {
+            addressDialog.open();
         });
 
-        Button addbtn = new Button("add", event -> {
-            addPerson.open();
-        });
+        form.add(lblfirstname);
+        form.add(firstname);
+        form.add(lbllastname);
+        form.add(lastname);
+        form.add(lblbirthday);
+        form.add(birthday);
+        form.add(lblstreet);
+        form.add(street);
+        form.add(lblnumber);
+        form.add(number);
+        form.add(lblplz);
+        form.add(plz);
+        form.add(lblcity);
+        form.add(city);
+        form.add(lblcountry);
+        form.add(country);
 
-        Button addressbtn = new Button("Addresses", event -> {
-           addressActions.open();
-        });
-
-        add(deletebtn);
-        add(editbtn);
-        add(addbtn);
-        add(addressbtn);
-
-        SQL.close();
+        form.add(address);
+        form.add(submit);
+        form.add(cancel);
+        dialog.add(form);
+        return dialog;
     }
+
+    void fill(Person selected){
+        firstname.setValue(selected.getFirstname());
+        lastname.setValue(selected.getLastname());
+        birthday.setValue(LocalDate.parse(selected.getBirthday()));
+        street.setValue(selected.getStreet());
+        number.setValue(selected.getNumber());
+        plz.setValue((double) selected.getPlz());
+        city.setValue(selected.getCity());
+        country.setValue(selected.getCountry());
+    }
+
 
     Dialog addressDialog(){
         Dialog dialog = new Dialog();
         FormLayout form = new FormLayout();
-        Grid<Address> addressGrid = new Grid<>(Address.class);
+        Grid<Address> addressGrid = new Grid<>(Address.class);;
 
         SQL.open();
         addressGrid.setItems(Address.getAddressList(SQL.selectAddress()));
@@ -178,9 +206,5 @@ public class MainView extends VerticalLayout {
         form.add(cancel);
         dialog.add(form);
         return dialog;
-    }
-
-    void update(){
-        grid.setItems(Person.getBothList(SQL.selectBoth()));
     }
 }
